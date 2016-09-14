@@ -1,5 +1,4 @@
-html{
-    /*background-image:url("http://hdwallpapers4you.com/wallpaper/adventure_time_desktop_4034x2275_hd-wallpaper-1193141.jpg");*/
+.bg{
     background: url("../img/bg.png") no-repeat center center fixed; 
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -24,3 +23,7 @@ html{
 #title{
     padding-left: 10px;
 }
+
+/*.white-text{*/
+/*    color: white;*/
+/*}*/
