@@ -1,0 +1,982 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Trabalho Prático de Redes de Computadores II</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Implementação de Consistência de Dados com 2PC Simplificado">
+    <meta name="author" content="Evelim Carla Ribeiro, Lucas Affonso Xavier de Morais">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="masthead">
+        <h2 class="muted">Trabalho Prático de Redes de Computadores II</h2>
+        <h6 class="muted">
+          <strong>Autores:</strong> GRR20101622 Evelim Carla Ribeiro
+          (<a href="mailto:ecr10@inf.ufpr.br">ecr10@inf.ufpr.br</a>)
+
+          e GRR20118372 Lucas Affonso Xavier de Morais
+          (<a href="mailto:laxm11@inf.ufpr.br">laxm11@inf.ufpr.br</a>)
+          
+        </h6>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <ul class="nav">
+                <li><a href="index.html">Relatório</a></li>
+                <li class="active"><a href="#">Código Fonte</a></li>
+                <li><a href="logs.html">Logs</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-fluid">
+        <p>
+          Clique sobre os arquivos para visualizá-los ou clique em
+          "Download RAW" para baixar o arquivo em formato de texto.
+        </p>
+      </div>
+
+      <div class="row-fluid">
+        <table class="table table-hover" id="file-nav">
+          <tr href="#servidor">
+            <td>servidor.rb</td>
+            <td style="width: 172px;"><strong><a href="src/servidor.rb.txt"><i class="icon-file"></i> Download RAW</a></strong></td>
+          </tr>
+          <tr href="#cliente">
+            <td>cliente.rb</td>
+            <td style="width: 172px;"><strong><a href="src/cliente.rb.txt"><i class="icon-file"></i> Download RAW</a></strong></td>
+          </tr>
+          <tr href="#client_handler">
+            <td>client_handler.rb</td>
+            <td style="width: 172px;"><strong><a href="src/client_handler.rb.txt"><i class="icon-file"></i> Download RAW</a></strong></td>
+          </tr>
+          <tr href="#log">
+            <td>log.rb</td>
+            <td style="width: 172px;"><strong><a href="src/log.rb.txt"><i class="icon-file"></i> Download RAW</a></strong></td>
+          </tr>
+          <tr href="#vigenere">
+            <td>vigenere.rb</td>
+            <td style="width: 172px;"><strong><a href="src/vigenere.rb.txt"><i class="icon-file"></i> Download RAW</a></strong></td>
+          </tr>
+        </table>
+
+        <div class="tab-content">
+          <div class="tab-pane" id="servidor">
+            <pre class="prettyprint">
+#!/usr/bin/env ruby1.9.1
+# encoding: utf-8
+
+#-----------------------------------------------------------#
+# 						servidor.rb
+#    Script em ruby que executa o servidor no protocolo 2PC
+#    Objetivo: Fazer a comunicação entre servidor e cliente
+#              e salvar os dados novos que o cliente passa  
+#    		   para esse servidor
+#    
+#    Autores: Evelim Carla Ribeiro
+# 	 		  Lucas Affonso Xavier de Morais
+#    Disciplina: Redes de computadores II
+#    Bacharelado Ciência da Computação
+#    Departamento de Informática
+#    Universidade Federal do Paraná
+#    Ano: 2015
+#-----------------------------------------------------------#  
+
+$LOAD_PATH << '.'
+
+require 'socket'               # Get sockets from stdlib
+require 'thread'
+require "vigenere" # vigenere.rb
+require "log"
+
+# Constantes
+TAM_MAX_MSG = 100
+
+# Variáveis Globais
+$port = ARGV[0]
+$log = Log.new("servidor#{$port}.log")
+$mutex = Mutex.new
+$keywordPath = "keyword#{$port}"
+$filePath = "crypt#{$port}"
+$keyword = ""
+
+
+class ConnectionHandler
+    # estabelece conexão com o cliente
+    def initialize(clientId, client)
+        @clientId, @client = clientId, client
+        @threadId = "Thread #{Thread.current.object_id}"
+        $log.report("\n", 1)
+        $log.report("#{@threadId}: Conexão estabelecida com o @cliente #{@clientId}\n",1)
+    end
+
+    # envia uma mensagem de Nok para o cliente
+    def sendNok
+        $log.report("#{@threadId}: Outro @cliente está sendo atendido no momento. Enviando NOK para @cliente #{@clientId}...\n",0)
+        @client.send("NOK",0)
+        $log.report("#{@threadId}: NOK enviado para @cliente #{@clientId}.\n",1)
+    end
+
+    # envia uma mensagem de Ok para o cliente
+    def sendOk
+        $log.report("#{@threadId}: Enviando OK para @cliente #{@clientId}...\n",0)
+        @client.send("OK",0)
+        $log.report("#{@threadId}: OK enviado para @cliente #{@clientId}.\n",1)    	
+    end
+
+    # mostra mensagem na tela e no log de resposta inválida
+    def invalidRequestCommitOrAbort
+        $log.report("#{@threadId}: Requisição recebida: '#{requisicao}'.\n",1)
+        $log.report("#{@threadId}: Resposta inválida\n",1)
+        $log.report("#{@threadId}: Resposta esperada: COMMIT ou ABORT.\n",1)    	
+    end
+
+    # recebe requisição e chama o metodo que o cliente pediu na requisição
+    def processaRequisicao
+        $log.report("#{@threadId}: Aguardando requisicao...\n",1)
+        requisicao = @client.recv(TAM_MAX_MSG)
+        $log.report("#{@threadId}: Requisição recebida: '#{requisicao}'.\n",1)
+        case requisicao
+        when "SETKEY"
+            setKey()
+        when "GETKEY"
+            getKey()
+        when "GETFILE"
+            getFile()
+        else
+            $log.report("#{@threadId}: Resposta inválida.\n",1)
+            $log.report("#{@threadId}: (Respostas esperadas: SETKEY, GETKEY, GETFILE.)\n",1)
+        end
+    end
+
+    # altera a chave que gera a criptografia de um arquivo, que usa a cifra de vigenere.
+    def setKey
+        if !$mutex.try_lock
+            sendNok
+        else
+            sendOk
+            $log.report("#{@threadId}: Aguardando nova requisição do @cliente #{@clientId}...\n",1)
+            requisicao = @client.recv(TAM_MAX_MSG)
+            if requisicao == "COMMIT"
+                @client.send("ACK",0)
+                $log.report("#{@threadId}: Requisição recebida: '#{requisicao}'.\n",1)
+                oldKey = $keyword
+                $keyword = @client.recv(TAM_MAX_MSG)
+                $log.report("#{@threadId}: Criptografando arquivo...\n",1)
+                File.open($filePath, "r+") do |f|
+                    $log.report("Arquivo cifrado com a antiga palavra chave '#{oldKey}':\n",0)
+                    $log.report("#{f.read}\n",0)
+                    f.rewind
+                    $log.report("\n",1)
+                    $log.report("Descifrado com a chave '#{oldKey}': \n",0)
+                    textoClaro = Vigenere.new(oldKey, f.read).decode
+                    $log.report("Arquivo descifrado:\n",0)
+                    $log.report("#{textoClaro}\n",0)
+                    $log.report("\n",0)
+                    f.rewind
+                    f.truncate(0)
+                    $log.report("Novo arquivo cifrado com a chave '#{$keyword}':\n",0)
+                    f.write Vigenere.new($keyword, textoClaro).encode
+                    f.rewind
+                    $log.report("#{f.read}\n",0)
+                    $log.report("\n",1)
+                    textoClaro = nil
+                end
+                $log.report("#{@threadId}: Chave alterada de '#{oldKey}' para '#{$keyword}'.\n",1)
+                # $log.report("#{@threadId}: sleeping 10sec.\n",1)
+                # sleep 10
+                # $log.report("#{@threadId}: wake!\n",1)
+            elsif requisicao == "ABORT"
+                $log.report("#{@threadId}: Operacao Cancelada\n",1)  
+            else 
+                invalidRequestCommitOrAbort
+            end
+            $mutex.unlock
+        end
+    end
+
+    # envia para o cliente a chave que gera a criptografia do arquivo
+    def getKey
+        if !$mutex.try_lock
+            sendNok
+        else
+            sendOk
+            $log.report("#{@threadId}: Aguardando nova requisição do @cliente #{@clientId}...\n",1)
+            requisicao = @client.recv(TAM_MAX_MSG)
+            $log.report("#{@threadId}: Requisição recebida: '#{requisicao}'.\n",1)
+            if requisicao == "COMMIT"
+                @client.send($keyword,0)
+                $log.report("#{@threadId}: Palavra-chave '#{$keyword}' enviada para o @cliente #{@clientId} com sucesso!\n",1)
+            elsif requisicao == "ABORT"
+                $log.report("#{@threadId}: Operacao Cancelada\n",1)  
+            else
+                invalidRequestCommitOrAbort
+            end
+            $mutex.unlock
+        end
+    end
+
+    # envia o arquivo criptografado para o cliente
+    def getFile
+        if !$mutex.try_lock
+            sendNok
+        else
+            sendOk
+            $log.report("#{@threadId}: Aguardando nova requisição do @cliente #{@clientId}...\n",1)
+            requisicao = @client.recv(TAM_MAX_MSG)
+            if requisicao == "COMMIT"
+                $log.report("#{@threadId}: Requisição recebida: '#{requisicao}'.\n",1)
+                File.open($filePath,"r") do |f|
+                    $log.report("#{@threadId}: Arquivo de #{f.size} bytes aberto para leitura.\n",1)
+                    @client.send(f.size.to_s,0)
+                    confirmacao = @client.recv(TAM_MAX_MSG)
+                    if confirmacao=="ACK"
+                        @client.send(f.read,0)
+                        $log.report("#{@threadId}: Arquivo enviado para o @cliente #{@clientId} com sucesso!\n",1)
+                    else
+                        $log.report("#{@threadId}: Falha ao receber confirmação do @cliente #{@clientId}.\n",1)
+                        $log.report("#{@threadId}: Mensagem do servidor: '#{confirmacao}'.\n",1)
+                    end
+                end
+            elsif requisicao == "ABORT"
+                $log.report("#{@threadId}: Operacao Cancelada\n",1)  
+            else 
+                invalidRequestCommitOrAbort
+            end
+            $mutex.unlock
+        end
+    end
+
+    # fecha a conexão do servidor com o cliente 
+    def close
+        $log.report("#{@threadId}: Fechando Conexão com o @cliente #{@clientId}.\n",1)
+        @client.close
+    end
+end
+
+# Salva keyword e o arquivo criptografado no disco.
+def shut_down
+    #salvando chave no arquivo
+    $log.report("Salvando palavra chave #{$keyword} no arquivo #{$keywordPath}\n",1)
+    key = File.new($keywordPath, "w+")
+    key.print $keyword
+    key.close
+
+    $log.report("\n",1)
+    $log.report("Saindo do Servidor.\n",1)
+    $log.report("Bye bye!",0)
+    $log.close
+end
+
+# carrega chave do arquivo
+def loadKey
+    key = File.new($keywordPath, "r+")
+    $keyword = key.read.chomp
+    key.close
+end
+
+# Encerra o servidor de forma limpa, quando recebe o sinal de termino ctrl+C
+Signal.trap("INT") {
+    shut_down
+    exit
+}
+
+# Encerra o servidor de forma limpa, quando recebe o sinal de termino kill
+Signal.trap("TERM") {
+    shut_down
+    exit
+}
+
+
+loadKey
+# inicia servidor
+server = TCPServer.open($port)
+$log.report("Servidor: #{$port}\n",1)
+contClient = 1 	# id dada para cliente que está sendo atendido
+loop {
+    # abre uma thread para atender cada cliente recebido
+    Thread.start(contClient, server.accept) do |clientId, client|
+        handler = ConnectionHandler.new(clientId, client)
+        handler.processaRequisicao()
+        handler.close()
+    end
+    contClient+=1
+}</pre>
+          </div>
+          <div class="tab-pane" id="cliente">
+            <pre class="prettyprint">
+#!/usr/bin/env ruby1.9.1
+# encoding: utf-8
+
+#-----------------------------------------------------------#
+# 						cliente.rb
+#    Script em ruby que executa o cliente no protocolo 2PC
+#    Objetivo: Fazer a comunicação entre servidor e cliente
+#              e salvar os dados novos que o cliente passa  
+#    		   para esse servidor
+#    
+#    Autores: Evelim Carla Ribeiro
+# 	 		  Lucas Affonso Xavier de Morais
+#    Disciplina: Redes de computadores II
+#    Bacharelado Ciência da Computação
+#    Departamento de Informática
+#    Universidade Federal do Paraná
+#    Ano: 2015
+#-----------------------------------------------------------#  
+
+$LOAD_PATH << '.'
+require 'socket'
+require "client_handler"
+require "log"
+
+# instancia cliente conectado a 3 servidores
+cliente = ClientHandler.new(3)
+opcao = 0
+system "clear"
+while opcao!=4 # se for igual a opção 4 fecha o programa
+	cliente.printConnectedServers
+	cliente.log.printMenu
+	opcao = gets.chomp.to_i
+	cliente.log.report("opcao digitada #{opcao}",0)
+	system("clear")
+
+	case opcao
+		when 1 # SETKEY
+			cliente.setKey
+		when 2 # GETKEY
+			cliente.getKey		
+		when 3 # GETFILE
+			cliente.getFile
+		when 4			
+		else # EXIT
+			cliente.log.report("Opcao inválida\n",1)
+	end
+
+	cliente.log.report("\n",1)
+end
+
+cliente.log.report("Saindo do Cliente.\n",0)
+cliente.log.close
+            </pre>
+          </div>
+          <div class="tab-pane" id="client_handler">
+            <pre class="prettyprint">
+# encoding: utf-8
+
+#---------------------------------------------------------------#
+# 						client_handler.rb
+#    Class em ruby que gerencia as operações do processo Cliente
+#    neste trabalho.
+#    Objetivo: Melhor legibilidade do código no arquivo
+#    cliente.rb
+#    Autores: Evelim Carla Ribeiro
+# 	 		  Lucas Affonso Xavier de Morais
+#    Disciplina: Redes de computadores II
+#    Bacharelado Ciência da Computação
+#    Departamento de Informática
+#    Universidade Federal do Paraná
+#    Ano: 2015
+#--------------------------------------------------------------#  
+
+class ClientHandler
+    # lê da entrada padrão o nome dos servidores e portas que ira se conectar
+    def initialize(numServers)
+        @log = Log.new("cliente#{Time.now.strftime('%Y%m%d%H%M%S')}.log")
+        @log.report("Cliente \n",1)
+        @numServers=numServers
+        @hostnames = []
+        @portas = []
+        @socket = []
+        @numServers.times do |i|
+            puts "Digite o nome do servidor #{i+1}: "
+            @hostnames[i]=gets.chomp	# array com nome dos servidores
+            puts "Digite a porta do servidor #{i+1}: "
+            @portas[i]=gets.chomp	# array com porta dos servidores
+            @log.report("Inserindo o servidor #{@hostnames[i]} na porta #{@portas[i]} para poder fazer conexão.\n",0)
+        end
+        # hardcoded servers for test
+        # @hostnames[0]="localhost"
+        # @hostnames[1]="localhost"
+        # @hostnames[2]="localhost"
+        # @portas[0]="1234"
+        # @portas[1]="2345"
+        # @portas[2]="3456"
+    end
+    
+    def log
+        @log
+    end
+    
+    # imprime o nome e a porta dos servidores que o cliente está conectado
+    def printConnectedServers
+        @log.report("Este cliente esta connectado aos seguintes servidores: \n",1)
+        @numServers.times do |i|
+            if i<@numServers-1
+                @log.report("#{@hostnames[i]}:#{@portas[i]}, ",1)
+            else
+                @log.report("#{@hostnames[i]}:#{@portas[i]}.\n",1)
+            end
+        end	
+    end
+    
+    # abre a conexão com os servidores
+    def openSocket
+        @numServers.times do |i|	# abre sockets
+            @socket[i] = TCPSocket.open(@hostnames[i], @portas[i].to_i)
+        end
+    end
+    
+    # fecha a conexão com os servidores
+    def closeSocket
+        @socket.each do |s|	# fecha sockets
+            s.close
+        end	
+    end
+    
+    # recebe de cada servidor uma resposta de OK se o não estiver ocupado
+    # caso contrario recebe NOK
+    def requestOkOrNok(resposta, i)
+        if resposta == "OK"
+            @okArray << i
+            @log.report("#{@hostnames[i]}:#{@portas[i]} respondeu OK.\n",1)
+        elsif resposta=="NOK"
+            @log.report("#{@hostnames[i]}:#{@portas[i]} está ocupado.\n",1)
+        else
+            @log.report("Resposta recebida: '#{resposta}'.\n",1)
+            @log.report("Resposta inválida.\n",1)
+        end
+    end
+    
+    # envia para os servidores uma requisição de ABORT
+    def sendAbort
+        @okArray.each do |i|
+            @log.report("Enviando ABORT para #{@hostnames[i]}:#{@portas[i]}...\n",1)
+            @socket[i].send("ABORT",0)
+            @log.report("ABORT enviado para #{@hostnames[i]}:#{@portas[i]}....\n",1)
+        end	
+    end
+    
+    # enviando commit para alterar o dado do servidor 
+    def sendCommit(i)
+        @log.report("enviando um COMMIT para #{@hostnames[i]}:#{@portas[i]}\n",1)
+        @socket[i].send("COMMIT",0)	
+    end
+    
+    # altera nos servidores a chave que criptografa
+    # com a cifra de Vigenere um arquivo
+    def setKey
+        @okArray=[]
+        
+        openSocket
+        @log.report("\n",0)
+            
+        @numServers.times do |i|
+            @log.report("Enviando requisição para #{@hostnames[i]}:#{@portas[i]}...\n",1)
+            @socket[i].send("SETKEY",0)
+            @log.report("Requisição SETKEY enviada. Aguardando resposta...\n",1)
+            resposta = @socket[i].recv(100)
+            requestOkOrNok(resposta, i)				
+        end
+        
+        @log.report("\n",1)	
+        if @okArray.size<@numServers
+            sendAbort
+        else
+            # enviar COMMIT com a alteração pra todo mundo.
+            @log.report("Digite a nova palavra-chave:\n",1)
+            keyword = gets.chomp
+            @log.report("A palavra chave digita é: #{keyword}\n",1)
+            @numServers.times do |i|
+                sendCommit(i)
+                confirmacao = @socket[i].recv(100)
+                @log.report("recebendo a confirmação #{confirmacao} do #{@socket[i]}\n",0)
+                if confirmacao=="ACK"
+                    @socket[i].send(keyword, 0)
+                    @log.report("Palavra-chave '#{keyword}' enviada para o host #{@hostnames[i]}:#{@portas[i].to_i} com sucesso!\n",1)
+                else
+                    @log.report("Falha ao receber confirmação do servidor.\n",1)
+                    @log.report("Mensagem do servidor: '#{confirmacao}'.\n",1)
+                end					
+            end
+        end
+    
+        closeSocket	
+    end
+    
+    # faz requisição da chave que criptografa o arquivo, e a mostra na tela.
+    def getKey
+        @okArray=[]
+    
+        openSocket
+        @log.report("\n",0)
+    
+        @numServers.times do |i| # envia GETFILE
+            @log.report("Enviando requisição para #{@hostnames[i]}:#{@portas[i]}...\n",1)
+            @socket[i].send("GETKEY",0)
+            @log.report("Requisição GETKEY enviada. Aguardando resposta...\n",1)
+            resposta = @socket[i].recv(100)
+            requestOkOrNok(resposta, i)
+        end
+    
+        @log.report("\n",1)
+        if @okArray.size<@numServers
+            sendAbort
+        else
+            # enviar COMMIT com a alteração pra todo mundo.
+            @log.report("\n",0)
+            keyArray = []
+            @numServers.times do |i|
+                sendCommit(i)
+                keyArray[i] = @socket[i].recv(100)
+                @log.report("Palavra-chave recebida do host #{@hostnames[i]}:#{@portas[i].to_i} com sucesso!\n ",1)
+            end
+            if keyArray.uniq.length > 1
+                @log.report("As Palavras-chaves recebidas são diferentes.\n",1)
+                @log.report("\n",1)
+                @numServers.times do |i|
+                    @log.report("Palavra-chave recebida de #{@hostnames[i]}:#{@portas[i].to_i}:\n",1)
+                    @log.report(keyArray[i],0)
+                    @log.report("\n",1)
+                end
+            else
+                @log.report("As Palavras-chaves recebidas são iguais.\n",1)
+                @log.report("\n",1)
+                @log.report("Palavra-chave:\n ",1)
+                @log.report(keyArray.first,1)
+                @log.report("\n",1)
+            end
+        end
+        
+        closeSocket	
+    end
+    
+    # faz requisição do arquivo criptografado, e o mostra na tela.
+    def getFile
+        @okArray=[]
+    
+        openSocket
+        @numServers.times do |i| # envia GETFILE
+            @log.report("\n",0)
+            @log.report("Enviando requisição para #{@hostnames[i]}:#{@portas[i]}...\n",1)
+            @socket[i].send("GETFILE",0)
+            @log.report("Requisição GETFILE enviada. Aguardando resposta...\n",1)
+            resposta = @socket[i].recv(100)
+            requestOkOrNok(resposta, i)
+        end
+    
+        @log.report("\n",1)
+        # puts @okArray
+        # puts @numServers
+        if @okArray.size<@numServers
+            sendAbort
+        else
+            # enviar COMMIT com a alteração pra todo mundo.
+            arqArray = []
+            @numServers.times do |i|
+                sendCommit(i)
+                tamArq = @socket[i].recv(100).to_i
+                @socket[i].send("ACK",0)
+                arqArray[i] = @socket[i].recv(tamArq)
+                @log.report("Arquivo de #{arqArray[i].size} bytes recebido do host #{@hostnames[i]}:#{@portas[i].to_i} com sucesso!\n",1)
+            end
+            if arqArray.uniq.length > 1
+                puts "Arquivos recebidos são diferentes."
+                @log.report("\n",1)
+                @numServers.times do |i|
+                    @log.report("Arquivo recebido de #{@hostnames[i]}:#{@portas[i].to_i}:\n",1)
+                    @log.report("#{arqArray[i]}\n",1)
+                    @log.report("\n",1)
+                end
+            else
+                @log.report("Arquivos recebidos são iguais.\n",1)
+                @log.report("\n",1)
+                @log.report("Arquivo recebido:\n",1)
+                @log.report("#{arqArray.first}\n",1)
+                @log.report("\n",1)
+            end
+        end
+        
+        closeSocket
+    end
+end
+            </pre>
+          </div>
+          <div class="tab-pane" id="log">
+            <pre class="prettyprint"># encoding: utf-8
+
+#---------------------------------------------------------------#
+# 						log.rb
+#    Classe em ruby que gera um arquivo com o log de um programa
+#    Objetivo: Aulixiar a compreensão da executação do protocolo
+# 			   2PC.    
+#    Autores: Evelim Carla Ribeiro
+# 	 		  Lucas Affonso Xavier de Morais
+#    Disciplina: Redes de computadores II
+#    Bacharelado Ciência da Computação
+#    Departamento de Informática
+#    Universidade Federal do Paraná
+#    Ano: 2015
+#--------------------------------------------------------------#  
+
+class Log
+	# inicializa a o log abrindo o arquivo e imprimindo um cabeçalho
+	# no arquivo
+	def initialize(filename)
+		@file = File.open(filename, "w+")
+		self.report(" -----------------------------------------------------------------------\n",0)
+		self.report("| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |\n",0)
+		self.report("| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |\n",0)
+		self.report(" -----------------------------------------------------------------------\n",0)
+	end
+
+	# imprime o menu do cliente do protocolo 2PC
+	def printMenu
+		self.report("
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? ", 1)		
+	end
+
+	# imprime uma msg no arquivo
+	def report(msg, stdout) 
+		@file.print msg
+		if (stdout==1)
+			# puts "entrei"
+			print msg
+		end
+	end
+
+	# fecha o arquivo de log
+	def close
+		@file.close
+	end
+end</pre>
+          </div>
+          <div class="tab-pane" id="vigenere">
+            <pre class="prettyprint">
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+# 
+# Copyright by Scott Severance
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# This is a library to implement the Vigenère Cipher
+# &#60;https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher&#62;.
+# 
+# Compatibility note:
+# -------------------
+# If you want to use a random key, *and* you don't supply a seed, this library
+# depends on a UNIX-like system (such as Linux). If you don't need that
+# particular feature, you should be able to use any system with a Ruby 1.8 or
+# 1.9 interpreter. This library is untested with Ruby 2.0.
+
+require 'enumerator'
+
+# Exception raised if the key is set before the text.
+class NoTextError < StandardError
+end
+
+# This class handles encoding and decoding text using the
+# Vigenère Cipher.
+class Vigenere
+  
+  # For convenience, you can set the options in the constructor. All
+  # values are optional (though they need to be specified eventually).
+  # 
+  # Arguments:
+  # key:             The cipher key
+  # text:            The text to be encoded or decoded
+  # chars_per_group: If non-nil, output will be grouped into groups of
+  #                    this many characters.
+  # 
+  # When setting the text and the key, this class will automatically
+  # convert its input to uppercase and strip all non-alphabetic
+  # characters.
+  def initialize(key = nil, text = nil, chars_per_group = nil)
+    @letter_set = %w[A B C D E F G H I J K L M N O P Q R S T U V W X Y Z]
+    @table, @letter_indices = make_tabula_recta
+    @chars_per_group = chars_per_group
+    self.text = text unless text.nil?
+    self.key = key unless key.nil?
+    @seeded = nil
+  end
+  
+  # Reader methods for various instance variables.
+  attr_reader :chars_per_group, :cipher_text, :letter_set, :plain_text, :seed, :table
+  
+  # Set the number of characters per output group. It is an error to set
+  # this to 0. Set to nil to disable grouping.
+  def chars_per_group=(n)
+    raise ArgumentError, "Can't have 0 characters per group; set to nil to disable" if n == 0
+    @chars_per_group = n
+  end
+  
+  # Decode the stored text using the stored key. Of course, both must be
+  # set prior to calling this method.
+  def decode
+    transform :decode
+  end
+  
+  # Encode the stored text using the stored key. Of course, both must be
+  # set prior to calling this method.
+  def encode
+    transform :encode   
+  end
+  
+  # Reads the specified file and sets its contents as the text.
+  def file=(filename)
+    File.open(filename) do |f|
+      self.text = f.read
+    end
+    self.text
+  end
+  
+  # Provides sensible output on inspect and when running in irb.
+  def inspect
+    "&#60;Vigenere: @text=%s, @key=%s, @seed=%s&#62;" % [
+      (@text) ? @text.inspect : 'nil',
+      (@key)  ? @key.inspect  : 'nil',
+      (@seed) ? @seed.inspect : 'nil',
+    ]
+  end
+  
+  # Returns the current key.
+  def key
+    add_spaces(@key, chars_per_group)
+  end
+  
+  # Sets the key. Raises NoTextError unless the text is set first.
+  # Automatically converts the key to uppercase and discards
+  # non-alphabetic characters.
+  def key=(key)
+    begin
+      txt_len = @text.split('').length # A bug in Ruby 1.8 sometimes causes
+                                       # String#length to return an incorrect value
+    rescue NoMethodError
+      raise NoTextError, "You must set the text before setting a key."
+    end
+    @original_key = key
+    key = normalize_text(key).split('')
+    until key.length >= txt_len
+      key += key
+    end
+    @key = key[0...txt_len].join('')
+    @key
+  end
+  
+  # Sets the alphabet to use. Takes an array of uppercase (if
+  # applicable) letters. Note: normalize_text can only auto-uppercase
+  # the letters of the English alphabet. That means that if you use a
+  # non-English alphabet, you'll have to manually convert your text and
+  # key to uppercase.
+  def letter_set=(array)
+    @letter_set = array
+    @table, @letter_indices = make_tabula_recta
+  end
+  
+  # Makes the tabula_recta--the cipher table. Returns an array of the
+  # table itself and a hash mapping letters to indices.
+  def make_tabula_recta
+    letters = @letter_set.dup
+    table = []
+    letters.length.times do
+      table.push letters.dup
+      letters.push letters.shift
+    end
+    indices = {}
+    letters = letters.each_with_index { |letter, i| indices[letter] = i }
+    [table, indices]
+  end
+  
+  # Generates a pseudorandom key the same length as the text. Sets and
+  # returns the key.
+  # 
+  # If a seed has been set via the seed= method, then this method
+  # generates a repeatable pseudorandom number based on the seed. If the
+  # seed has not been set, or has been explicitly set to nil, then this
+  # method generates the most random number possible on the system.
+  # 
+  # Compatibility note: In cases where @seed is nil (meaning a seed has not been
+  # set via the seed= method), this implementation depends on the underlying
+  # system having a 'dd' command and a '/dev/random'. This most likely means
+  # that this case will only work on a UNIX-like system. It has only been tested
+  # on Linux.
+  def random_key
+    text_length = @text.split('').length # See explanation in method key=.
+    if @seed
+      key = []
+      text_length.times do
+        key.push(@table[0][rand(@letter_set.length)])
+      end
+    else
+      cmd = "dd if=/dev/random bs=1 count=#{text_length}"
+      key = `#{cmd} 2>/dev/null`.chomp.unpack("C#{text_length}")
+      key.collect! { |i| @table[0][i % @letter_set.length] }
+    end
+    self.key = key.join ''
+  end
+  
+  # To use a seeded random number for a random key (so that the key can
+  # be replayed, call this method with an Integer. To use a more random
+  # key, call it with nil.
+  def seed=(value)
+    srand(value) if value.kind_of? Integer
+    @seed = value
+  end
+  
+  # Returns the current text.
+  def text
+    add_spaces(@text, @chars_per_group)
+  end
+  
+  # Sets the text. Automatically converts text to uppercase and discards
+  # non-alphabetic characters.
+  def text=(text)
+    @text = normalize_text text
+    self.key= @original_key if @original_key
+  end
+  
+  # Handles conversion to a string. Returns the text. Text is in
+  # whichever state it was last converted to.
+  def to_s
+    text
+  end
+  
+  # The following methods are private.
+  private
+  
+  # Adds spaces to str every chars_per_group characters.
+  def add_spaces(str, chars_per_group = nil)
+    return str if chars_per_group.nil?
+    str = str.split ''
+    out = []
+    str.each_slice(chars_per_group) do |group|
+      group.push ' '
+      out.push group.join('')
+    end
+    out.join('').strip
+  end
+  
+  # Converts text to uppercase and discards non-alphabetic characters.
+  def normalize_text(text)
+    letters = text.upcase.split ''
+    letters.delete_if { |x| ! @table[0].include?(x) }
+    letters.join ''
+  end
+  
+  # Performs the actual encoding or decoding. The argument direction is
+  # one of :encode or :decode.
+  def transform(direction)
+    text_letters = @text.split ''
+    key_letters = @key.split ''
+    transformed = []
+    case direction
+      when :encode
+        text_letters.each_with_index do |letter, i|
+          index1 = @letter_indices.fetch(key_letters.fetch(i))
+          index2 = @letter_indices.fetch(letter)
+          transformed.push @table.fetch(index1).fetch(index2)
+        end
+        @plain_text = @text
+        @cipher_text = add_spaces(transformed.join(''), @chars_per_group)
+        @text = normalize_text @cipher_text
+        return @cipher_text
+      when :decode
+        text_letters.each_with_index do |letter, i|
+          index = @letter_indices.fetch(letter) - @letter_indices.fetch(key_letters.fetch(i))
+          transformed.push @table[0].fetch(index)
+        end
+        @plain_text = add_spaces(transformed.join(''), @chars_per_group)
+        @cipher_text = self.text
+        @text = normalize_text @plain_text
+        return @plain_text
+      else
+        raise ArgumentError, "direction must be either :encode or :decode"
+    end
+  end
+end
+
+# Testing code. Only executed if this file is executed directly. If this
+# file is require'd, this code doesn't run.
+# 
+# To run the testing code:
+#     ./vigenere.rb text key [chars-per-group]
+if $0 == __FILE__
+  raise "Must supply at least 2 command line arguments" if ARGV.length < 2
+  a = Vigenere.new
+  a.text = ARGV[0]
+  a.key = ARGV[1]
+  a.chars_per_group = ARGV[2].to_i if ARGV.length >= 3
+  
+  puts "Using supplied key:"
+  puts "      Plain text : #{a}"
+  puts "    Supplied key : #{a.key}"
+  puts "    Encoded text : #{a.encode}"
+  puts "    Decoded text : #{a.decode}"
+  
+  a.seed = 7629384752639857236945827346952837652938752392938742837462598
+  a.random_key
+  
+  puts "\nUsing random (seeded) key:"
+  puts "      Plain text : #{a}"
+  puts "      Random key : #{a.key}"
+  puts "    Encoded text : #{a.encode}"
+  puts "    Decoded text : #{a.decode}"
+end
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=desert"></script>
+    <script type="text/javascript">
+      $(function () {
+        $('#file-nav tr').click(function (e) {
+          $(this).tab('show');
+
+          $('#file-nav tr').each(function () {
+            $(this).removeClass('info');
+          });
+          $(this).addClass('info');
+        });
+      })
+    </script>
+  </body>
+</html>

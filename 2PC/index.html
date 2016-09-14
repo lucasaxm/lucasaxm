@@ -1,0 +1,116 @@
+
+<DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Trabalho Prático de Redes de Computadores II</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Implementação de Consistência de Dados com 2PC Simplificado">
+    <meta name="author" content="Evelim Carla Ribeiro, Lucas Affonso Xavier de Morais">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="masthead">
+        <h2 class="muted">Trabalho Prático de Redes de Computadores II</h2>
+        <h6 class="muted">
+          <strong>Autores:</strong> GRR20101622 Evelim Carla Ribeiro
+          (<a href="mailto:ecr10@inf.ufpr.br">ecr10@inf.ufpr.br</a>)
+          e GRR20118372 Lucas Affonso Xavier de Morais
+          (<a href="mailto:laxm11@inf.ufpr.br">laxm11@inf.ufpr.br</a>)
+        </h6>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <ul class="nav">
+                <li class="active"><a href="#">Relatório</a></li>
+                <li><a href="source.html">Código Fonte</a></li>
+                <li><a href="logs.html">Logs</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-fluid">
+        <div class="span7">
+          <h2>1. O Protocolo</h2>
+          <p>
+            Neste trabalho foi desenvolvida uma versão simplificada do protocolo <em>2PC ("Two-Phase Commit")</em>, que assume que servidores e clientes nunca falham. O protocolo permite a implementação de servidor replicado. Este servidor mantém algum dado (no nosso caso, um arquivo criptografado e sua palavra-chave) e a consistência deste dado é garantida em todas as réplicas a qualquer momento, graças ao protocolo.
+          </p>
+          <p>
+            Nas figuras à direita temos uma simulação de como o protocolo controla o acesso dos clientes aos servidores.
+          </p>
+          <h2>2. Decisões Implementadas </h2>
+          <p>
+            Na parte do servidor:
+            <ol>
+              <li> Para rodar o servidor execute o seguinte comando:<br />
+              <em>./servidor.rb [portaDoservidor]</em> </li>
+              <li>Consideramos cada requisição do cliente como
+              um cliente novo, assim fechando o "cliente" quando terminamos de 
+              atender a requisição;</li>
+              <li>Cada cliente no servidor é uma thread, assim conseguimos 
+              atender a requisições de vários clientes ( mesmo sabendo que só
+              um cliente pode alterar de cada vez );</li>
+              <li> Utilizamos um mutex para conseguir saber qual thread estava em execução, assim o programa bloqueia outras threads de executarem ao mesmo tempo.</li>
+              <li>A cifra que escolhemos para criar o arquivo criptografado é
+              a de Vigenere, e sua implementação se encontra no arquivo <em>vigenere.rb</em>. Assim toda vez que o cliente altera a palavra-chave
+              descriptografamos o arquivo com a antiga chave, e o criptografamos
+              novamente com a nova chave.</li>
+              <li>O nome do arquivo criptografado é <em>crypt[portaDoservidor]</em> e sua palavra-chave está no arquivo <em>keyword[portaDoservidor]</em>. Estes arquivos <strong>DEVEM</strong> existir no servidor antes que o programa seja executado.</li>
+              <li> Os logs gerados a partir do servidor possuem o nome <em>servidor[portaDoservidor].log</em>. </li>
+            </ol>
+          </p>  
+            
+          <p>
+             Na parte do cliente:
+             <ol>
+               <li> Para rodar o cliente execute o seguinte comando: <br />
+               <em>./cliente.rb</em></li>
+               <li> O nome dos servidores e suas portas são recebidos pela
+               entrada padrão.</li>
+               <li> O cliente pode requisitar ao servidor as seguintes opções:
+                 <ul>
+                   <li> <strong>Trocar palavra-chave</strong>: É solicitado ao cliente uma nova palavra-chave que será usada para cifrar o arquivo que está no servidor.</li>
+                   <li> <strong>Ver palavra-chave</strong>: A palavra-chave armazenada no servidor é exibida para o cliente.</li>
+		               <li> <strong>Ver arquivo</strong>: O arquivo criptografado é exibido para o cliente.</li>
+                 </ul>
+               </li>
+               <li> Os metodos criados para que o cliente interaja com o servidor estão implementados no arquivo <em>client_handler.rb</em></li>
+               <li>O arquivo de log gerado pelo cliente tem seu nome formado pela palavra <em>cliente</em>, a data e horario da execução, e a extensão <em>.log</em>.</li>
+             </ol>
+          </p>
+          
+          <p>
+            Ambos:
+            <ol>
+              <li>Para executar tanto o cliente quanto o servidor, é necessário ter o Ruby versão 1.9.3 instalado na máquina, e que os arquivos <em>servidor.rb</em> e <em>cliente.rb</em> possuam permissão para execução.</li>
+              <li>Criamos um arquivo <em>log.rb</em>, que contém uma Classe que auxilia o servidor e o cliente na impressão dos logs.</li>
+              
+            </ol>
+          </p>
+        </div>
+        <div class="span5">
+          <img src="img/img1.png" class="img-polaroid">
+          <img src="img/img2.png" class="img-polaroid">
+          <img src="img/img3.png" class="img-polaroid">
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=ruby&skin=desert"></script>
+  </body>
+</html>

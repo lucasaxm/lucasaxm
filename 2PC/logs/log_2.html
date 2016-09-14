@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Trabalho Prático de Redes de Computadores II</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Implementação de Consistência de Dados com 2PC Simplificado">
+    <meta name="author" content="Evelim Ribeiro, Lucas Morais">
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="../css/main.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="masthead">
+        <h2 class="muted">Trabalho Prático de Redes de Computadores II</h2>
+        <h6 class="muted">
+          <strong>Autores: </strong> Evelim Carla Ribeiro (<a href="mailto:ecr10@inf.ufpr.br">ecr10@inf.ufpr.br</a>)
+          e Lucas Affonso Xavier de Morais (<a href="mailto:laxm11@inf.ufpr.br">laxm11@inf.ufpr.br</a>)
+        </h6>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <ul class="nav">
+                <li><a href="../index.html">Relatório</a></li>
+                <li><a href="../source.html">Código Fonte</a></li>
+                <li class="active"><a href="../logs.html">Logs</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <p>
+            Este teste demonstra o envio de NOK de todos os servidores para um cliente.
+            (Neste caso, cliente 2)
+          </p>
+          <p>
+            O log mostra que o cliente 1 faz uma requisição para alterar a chave dos servidores,
+            e os servidores mandam um OK para o cliente 1. Então o cliente 2 aparece fazendo uma
+            requisição aos mesmo servidores que o cliente 1 está modificanado, assim 
+            os servidores enviam NOK para o Cliente 2, pois eles estão ocupados.
+          </p>
+
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Cliente 1</h4>
+          <pre class="prettyprint linenums">
+ -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+ -----------------------------------------------------------------------
+Cliente 
+Inserindo o servidor localhost na porta 1234 para poder fazer conexão.
+Inserindo o servidor localhost na porta 2345 para poder fazer conexão.
+Inserindo o servidor localhost na porta 3456 para poder fazer conexão.
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 2
+Enviando requisição para localhost:1234...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:1234 está ocupado.
+Enviando requisição para localhost:2345...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:2345 está ocupado.
+Enviando requisição para localhost:3456...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:3456 está ocupado.
+
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 4
+Saindo do Cliente.
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 4
+Saindo do Cliente.
+</pre>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Cliente 2</h4>
+          <pre class="prettyprint linenums"> 
+             -----------------------------------------------------------------------
+            | Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+            | Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+             -----------------------------------------------------------------------
+            Cliente 
+            Inserindo o servidor localhost na porta 1234 para poder fazer conexão.
+            Inserindo o servidor localhost na porta 2345 para poder fazer conexão.
+            Inserindo o servidor localhost na porta 3456 para poder fazer conexão.
+            Este cliente esta connectado aos seguintes servidores: 
+            localhost:1234, localhost:2345, localhost:3456.
+            
+            		Escolha uma opção
+            		1 - Trocar palavra-chave.
+            		2 - Ver palavra-chave.
+            		3 - Ver arquivo.
+            		4 - Sair.
+            		? opcao digitada 2
+            Enviando requisição para localhost:1234...
+            Requisição GETKEY enviada. Aguardando resposta...
+            localhost:1234 está ocupado.
+            Enviando requisição para localhost:2345...
+            Requisição GETKEY enviada. Aguardando resposta...
+            localhost:2345 está ocupado.
+            Enviando requisição para localhost:3456...
+            Requisição GETKEY enviada. Aguardando resposta...
+            localhost:3456 está ocupado.
+            
+            
+            Este cliente esta connectado aos seguintes servidores: 
+            localhost:1234, localhost:2345, localhost:3456.
+            
+            		Escolha uma opção
+            		1 - Trocar palavra-chave.
+            		2 - Ver palavra-chave.
+            		3 - Ver arquivo.
+            		4 - Sair.
+            		? opcao digitada 4
+            Saindo do Cliente.
+            </pre>
+          </div>
+        </div>
+            
+        <hr>
+            
+        <div class="row-fluid">
+          <div class="span12">
+            <h4>Servidor 1</h4>
+              <pre class="prettyprint linenums lang-python"> 
+                -----------------------------------------------------------------------
+                | Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+                | Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+                 -----------------------------------------------------------------------
+                Servidor: 1234
+                
+                Thread 19809920: Conexão estabelecida com o @cliente 1
+                Thread 19809920: Aguardando requisicao...
+                Thread 19809920: Requisição recebida: 'SETKEY'.
+                Thread 19809920: Enviando OK para @cliente 1...
+                Thread 19809920: OK enviado para @cliente 1.
+                Thread 19809920: Aguardando nova requisição do @cliente 1...
+                
+                Thread 19807940: Conexão estabelecida com o @cliente 2
+                Thread 19807940: Aguardando requisicao...
+                Thread 19807940: Requisição recebida: 'GETKEY'.
+                Thread 19807940: Outro @cliente está sendo atendido no momento. Enviando NOK para @cliente 2...
+                Thread 19807940: NOK enviado para @cliente 2.
+                Thread 19807940: Fechando Conexão com o @cliente 2.
+                Thread 19809920: Requisição recebida: 'COMMIT'.
+                Thread 19809920: Criptografando arquivo...
+                Arquivo cifrado com a antiga palavra chave 'B':
+                FVTPVVNUFYUPDJGSBEP
+                
+                Descifrado com a chave 'B': 
+                Arquivo descifrado:
+                EUSOUUMTEXTOCIFRADO
+                
+                Novo arquivo cifrado com a chave 'a':
+                EUSOUUMTEXTOCIFRADO
+                
+                Thread 19809920: Chave alterada de 'B' para 'a'.
+                Thread 19809920: Fechando Conexão com o @cliente 1.
+                Salvando palavra chave a no arquivo keyword1234
+                
+                Saindo do Servidor.
+                Bye bye!
+              </pre>
+             </div>
+          </div>
+
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Servidor 2</h4>
+          <pre class="prettyprint linenums lang-python"> 
+             -----------------------------------------------------------------------
+            | Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+            | Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+             -----------------------------------------------------------------------
+            Servidor: 2345
+            
+            Thread 9138040: Conexão estabelecida com o @cliente 1
+            Thread 9138040: Aguardando requisicao...
+            Thread 9138040: Requisição recebida: 'SETKEY'.
+            Thread 9138040: Enviando OK para @cliente 1...
+            Thread 9138040: OK enviado para @cliente 1.
+            Thread 9138040: Aguardando nova requisição do @cliente 1...
+            
+            Thread 9136060: Conexão estabelecida com o @cliente 2
+            Thread 9136060: Aguardando requisicao...
+            Thread 9136060: Requisição recebida: 'GETKEY'.
+            Thread 9136060: Outro @cliente está sendo atendido no momento. Enviando NOK para @cliente 2...
+            Thread 9136060: NOK enviado para @cliente 2.
+            Thread 9136060: Fechando Conexão com o @cliente 2.
+            Thread 9138040: Requisição recebida: 'COMMIT'.
+            Thread 9138040: Criptografando arquivo...
+            Arquivo cifrado com a antiga palavra chave 'B':
+            FVTPVVNUFYUPDJGSBEP
+            
+            Descifrado com a chave 'B': 
+            Arquivo descifrado:
+            EUSOUUMTEXTOCIFRADO
+            
+            Novo arquivo cifrado com a chave 'a':
+            EUSOUUMTEXTOCIFRADO
+            
+            Thread 9138040: Chave alterada de 'B' para 'a'.
+            Thread 9138040: Fechando Conexão com o @cliente 1.
+            Salvando palavra chave a no arquivo keyword2345
+            
+            Saindo do Servidor.
+            Bye bye!
+          </pre>
+          </div>
+      </div>      
+      
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Servidor 3</h4>
+          <pre class="prettyprint linenums lang-python"> -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+ -----------------------------------------------------------------------
+Servidor: 3456
+
+Thread 11223240: Conexão estabelecida com o @cliente 1
+Thread 11223240: Aguardando requisicao...
+Thread 11223240: Requisição recebida: 'SETKEY'.
+Thread 11223240: Enviando OK para @cliente 1...
+Thread 11223240: OK enviado para @cliente 1.
+Thread 11223240: Aguardando nova requisição do @cliente 1...
+
+Thread 11221260: Conexão estabelecida com o @cliente 2
+Thread 11221260: Aguardando requisicao...
+Thread 11221260: Requisição recebida: 'GETKEY'.
+Thread 11221260: Outro @cliente está sendo atendido no momento. Enviando NOK para @cliente 2...
+Thread 11221260: NOK enviado para @cliente 2.
+Thread 11221260: Fechando Conexão com o @cliente 2.
+Thread 11223240: Requisição recebida: 'COMMIT'.
+Thread 11223240: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'B':
+FVTPVVNUFYUPDJGSBEP
+
+Descifrado com a chave 'B': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'a':
+EUSOUUMTEXTOCIFRADO
+
+Thread 11223240: Chave alterada de 'B' para 'a'.
+Thread 11223240: Fechando Conexão com o @cliente 1.
+Salvando palavra chave a no arquivo keyword3456
+
+Saindo do Servidor.
+Bye bye!</pre>
+        </div>
+      </div>
+
+      <hr>
+      
+    </div>
+
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=desert"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+html{
+    /*background-image:url("http://hdwallpapers4you.com/wallpaper/adventure_time_desktop_4034x2275_hd-wallpaper-1193141.jpg");*/
+    background: url("../img/bg.png") no-repeat center center fixed; 
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+/*#content{
+    height: 1000px;
+}*/
+
+#autor{
+    width: 600px;
+    height: 800px;
+    
+    /* centraliza o iframe */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#title{
+    padding-left: 10px;
+}

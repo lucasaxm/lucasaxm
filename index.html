@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>laxm11 | Boa tarde</title>
+    <meta name="keywords" content="boa tarde">
+    <meta name="author" content="Lucas Affonso X. de Morais">
+    <link rel="icon" type="image/png" href="img/bmo.png">
+    
+    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/css/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="css/hue.css">
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper teal">
+        <a onClick="showHome()" href="#" class="brand-logo" id="title">laxm11</a>
+        <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
+        <ul class="right hide-on-med-and-down">
+            <li><a onclick="showHome()" href="#">Home</a></li>
+            <li><a onclick="showTrabalhos()" href="#">Trabalhos</a></li>
+            <li><a onclick="showAutor()" href="#">Sobre o Autor</a></li>
+            <li><a onclick="showDisciplinas()" href="#">Disciplinas</a></li>
+        </ul>
+        <ul class="side-nav" id="mobile-demo">
+            <li><a onclick="showHome()" href="#">Home</a></li>
+            <li><a onclick="showTrabalhos()" href="#">Trabalhos</a></li>
+            <li><a onclick="showAutor()" href="#">Sobre o Autor</a></li>
+            <li><a onclick="showDisciplinas()" href="#">Disciplinas</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="container">
+    <div id="content" class="row"></div>
+</div>
+        
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script> 
+    <!-- Compiled and minified JavaScript -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/js/materialize.min.js"></script>
+    <script src="js/index.js"></script> 
+</body>
+</html>

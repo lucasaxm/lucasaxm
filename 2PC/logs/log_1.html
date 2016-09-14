@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Trabalho Prático de Redes de Computadores II</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Implementação de Consistência de Dados com 2PC Simplificado">
+    <meta name="author" content="Evelim Carla, Lucas Affonso">
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="../css/main.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="masthead">
+        <h2 class="muted">Trabalho Prático de Redes de Computadores II</h2>
+        <h6 class="muted">
+          <strong>Autores: </strong> Evelim Carla Ribeiro (<a href="mailto:ecr10@inf.ufpr.br">ecr10@inf.ufpr.br</a>)
+          e Lucas Affonso Xavier de Morais (<a href="mailto:laxm11@inf.ufpr.br">laxm11@inf.ufpr.br</a>)
+        </h6>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <ul class="nav">
+                <li><a href="../index.html">Relatório</a></li>
+                <li><a href="../source.html">Código Fonte</a></li>
+                <li class="active"><a href="../logs.html">Logs</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <p>
+            Este teste demonstra um cliente acessando 3 servidores. Todos os servidores responderam OK para as solicitações feitas pelo Cliente.
+          </p>
+          <p>
+            Primeiramente é requisitado para os servidores a exibição da palavra-chave, e os 3 respondem que a palavra chave é "a".
+          </p>
+          <p>
+            Então solicitamos a mudança da chave de "a" para "teste", e pedimos novamente para ver a palavra-chave, que agora é "teste".
+          </p>
+          <p>
+            Após essa mudança pedimos para que o arquivo seja exibido, e seu conteúdo nos é mostrado na linha 132 do log do Cliente.
+          </p>
+          <p>
+            Agora mudamos a chave de "teste" para "a", e pedimos para ver a palavra-chave que está no servidor e depois o arquivo, que é exibido na linha 227 do log do cliente.
+          </p>
+          <p>
+            Mudamos a chave de "a" para "b" e vemos o conteúdo do arquivo na linha 291 do log do cliente, então saímos do cliente.
+          </p>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Cliente</h4>
+          <pre class="prettyprint linenums"> -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+ -----------------------------------------------------------------------
+Cliente 
+Inserindo o servidor localhost na porta 1234 para poder fazer conexão.
+Inserindo o servidor localhost na porta 2345 para poder fazer conexão.
+Inserindo o servidor localhost na porta 3456 para poder fazer conexão.
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 2
+Enviando requisição para localhost:1234...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+
+enviando um COMMIT para localhost:1234
+Palavra-chave recebida do host localhost:1234 com sucesso!
+ enviando um COMMIT para localhost:2345
+Palavra-chave recebida do host localhost:2345 com sucesso!
+ enviando um COMMIT para localhost:3456
+Palavra-chave recebida do host localhost:3456 com sucesso!
+ As Palavras-chaves recebidas são iguais.
+
+Palavra-chave:
+ a
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 1
+Enviando requisição para localhost:1234...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+Digite a nova palavra-chave:
+A palavra chave digita é: teste
+enviando um COMMIT para localhost:1234
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001d054c0&#62; 
+Palavra-chave 'teste' enviada para o host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001d05498&#62; 
+Palavra-chave 'teste' enviada para o host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001d05470&#62; 
+Palavra-chave 'teste' enviada para o host localhost:3456 com sucesso!
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 2
+Enviando requisição para localhost:1234...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+
+enviando um COMMIT para localhost:1234
+Palavra-chave recebida do host localhost:1234 com sucesso!
+ enviando um COMMIT para localhost:2345
+Palavra-chave recebida do host localhost:2345 com sucesso!
+ enviando um COMMIT para localhost:3456
+Palavra-chave recebida do host localhost:3456 com sucesso!
+ As Palavras-chaves recebidas são iguais.
+
+Palavra-chave:
+ teste
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 3
+Enviando requisição para localhost:1234...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+
+Enviando requisição para localhost:2345...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+
+Enviando requisição para localhost:3456...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+enviando um COMMIT para localhost:1234
+Arquivo de 19 bytes recebido do host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+Arquivo de 19 bytes recebido do host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+Arquivo de 19 bytes recebido do host localhost:3456 com sucesso!
+Arquivos recebidos são iguais.
+
+Arquivo recebido:
+XYKHYNQLXBMSUBJKEVH
+
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 1
+Enviando requisição para localhost:1234...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+Digite a nova palavra-chave:
+A palavra chave digita é: A
+enviando um COMMIT para localhost:1234
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cffed0&#62; 
+Palavra-chave 'A' enviada para o host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cffea8&#62; 
+Palavra-chave 'A' enviada para o host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cffe80&#62; 
+Palavra-chave 'A' enviada para o host localhost:3456 com sucesso!
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 2
+Enviando requisição para localhost:1234...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição GETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+
+enviando um COMMIT para localhost:1234
+Palavra-chave recebida do host localhost:1234 com sucesso!
+ enviando um COMMIT para localhost:2345
+Palavra-chave recebida do host localhost:2345 com sucesso!
+ enviando um COMMIT para localhost:3456
+Palavra-chave recebida do host localhost:3456 com sucesso!
+ As Palavras-chaves recebidas são iguais.
+
+Palavra-chave:
+ A
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 3
+Enviando requisição para localhost:1234...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+
+Enviando requisição para localhost:2345...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+
+Enviando requisição para localhost:3456...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+enviando um COMMIT para localhost:1234
+Arquivo de 19 bytes recebido do host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+Arquivo de 19 bytes recebido do host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+Arquivo de 19 bytes recebido do host localhost:3456 com sucesso!
+Arquivos recebidos são iguais.
+
+Arquivo recebido:
+EUSOUUMTEXTOCIFRADO
+
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 1
+Enviando requisição para localhost:1234...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+Enviando requisição para localhost:2345...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+Enviando requisição para localhost:3456...
+Requisição SETKEY enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+Digite a nova palavra-chave:
+A palavra chave digita é: B
+enviando um COMMIT para localhost:1234
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cea328&#62;
+Palavra-chave 'B' enviada para o host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cea300&#62;
+Palavra-chave 'B' enviada para o host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+recebendo a confirmação ACK do #&#60;TCPSocket:0x00000001cea2b0&#62;
+Palavra-chave 'B' enviada para o host localhost:3456 com sucesso!
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 3
+Enviando requisição para localhost:1234...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:1234 respondeu OK.
+
+Enviando requisição para localhost:2345...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:2345 respondeu OK.
+
+Enviando requisição para localhost:3456...
+Requisição GETFILE enviada. Aguardando resposta...
+localhost:3456 respondeu OK.
+
+enviando um COMMIT para localhost:1234
+Arquivo de 19 bytes recebido do host localhost:1234 com sucesso!
+enviando um COMMIT para localhost:2345
+Arquivo de 19 bytes recebido do host localhost:2345 com sucesso!
+enviando um COMMIT para localhost:3456
+Arquivo de 19 bytes recebido do host localhost:3456 com sucesso!
+Arquivos recebidos são iguais.
+
+Arquivo recebido:
+FVTPVVNUFYUPDJGSBEP
+
+
+Este cliente esta connectado aos seguintes servidores: 
+localhost:1234, localhost:2345, localhost:3456.
+
+		Escolha uma opção
+		1 - Trocar palavra-chave.
+		2 - Ver palavra-chave.
+		3 - Ver arquivo.
+		4 - Sair.
+		? opcao digitada 4
+Saindo do Cliente.
+</pre>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Servidor 1</h4>
+            <pre class="prettyprint linenums"> -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+ -----------------------------------------------------------------------
+Servidor: 1234
+
+Thread 20654280: Conexão estabelecida com o @cliente 1
+Thread 20654280: Aguardando requisicao...
+Thread 20654280: Requisição recebida: 'GETKEY'.
+Thread 20654280: Enviando OK para @cliente 1...
+Thread 20654280: OK enviado para @cliente 1.
+Thread 20654280: Aguardando nova requisição do @cliente 1...
+Thread 20654280: Requisição recebida: 'COMMIT'.
+Thread 20654280: Palavra-chave 'a' enviada para o @cliente 1 com sucesso!
+Thread 20654280: Fechando Conexão com o @cliente 1.
+
+Thread 20651520: Conexão estabelecida com o @cliente 2
+Thread 20651520: Aguardando requisicao...
+Thread 20651520: Requisição recebida: 'SETKEY'.
+Thread 20651520: Enviando OK para @cliente 2...
+Thread 20651520: OK enviado para @cliente 2.
+Thread 20651520: Aguardando nova requisição do @cliente 2...
+Thread 20651520: Requisição recebida: 'COMMIT'.
+Thread 20651520: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'a':
+EU SOU UM TEXTO CIFRADO
+
+Descifrado com a chave 'a': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Thread 20651520: Chave alterada de 'a' para 'teste'.
+Thread 20651520: Fechando Conexão com o @cliente 2.
+
+Thread 20554160: Conexão estabelecida com o @cliente 3
+Thread 20554160: Aguardando requisicao...
+Thread 20554160: Requisição recebida: 'GETKEY'.
+Thread 20554160: Enviando OK para @cliente 3...
+Thread 20554160: OK enviado para @cliente 3.
+Thread 20554160: Aguardando nova requisição do @cliente 3...
+Thread 20554160: Requisição recebida: 'COMMIT'.
+Thread 20554160: Palavra-chave 'teste' enviada para o @cliente 3 com sucesso!
+Thread 20554160: Fechando Conexão com o @cliente 3.
+
+Thread 20553240: Conexão estabelecida com o @cliente 4
+Thread 20553240: Aguardando requisicao...
+Thread 20553240: Requisição recebida: 'GETFILE'.
+Thread 20553240: Enviando OK para @cliente 4...
+Thread 20553240: OK enviado para @cliente 4.
+Thread 20553240: Aguardando nova requisição do @cliente 4...
+Thread 20553240: Requisição recebida: 'COMMIT'.
+Thread 20553240: Arquivo de 19 bytes aberto para leitura.
+Thread 20553240: Arquivo enviado para o @cliente 4 com sucesso!
+Thread 20553240: Fechando Conexão com o @cliente 4.
+
+Thread 20552120: Conexão estabelecida com o @cliente 5
+Thread 20552120: Aguardando requisicao...
+Thread 20552120: Requisição recebida: 'SETKEY'.
+Thread 20552120: Enviando OK para @cliente 5...
+Thread 20552120: OK enviado para @cliente 5.
+Thread 20552120: Aguardando nova requisição do @cliente 5...
+Thread 20552120: Requisição recebida: 'COMMIT'.
+Thread 20552120: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Descifrado com a chave 'teste': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Thread 20552120: Chave alterada de 'teste' para 'A'.
+Thread 20552120: Fechando Conexão com o @cliente 5.
+
+Thread 19700840: Conexão estabelecida com o @cliente 6
+Thread 19700840: Aguardando requisicao...
+Thread 19700840: Requisição recebida: 'GETKEY'.
+Thread 19700840: Enviando OK para @cliente 6...
+Thread 19700840: OK enviado para @cliente 6.
+Thread 19700840: Aguardando nova requisição do @cliente 6...
+Thread 19700840: Requisição recebida: 'COMMIT'.
+Thread 19700840: Palavra-chave 'A' enviada para o @cliente 6 com sucesso!
+Thread 19700840: Fechando Conexão com o @cliente 6.
+
+Thread 19699880: Conexão estabelecida com o @cliente 7
+Thread 19699880: Aguardando requisicao...
+Thread 19699880: Requisição recebida: 'GETFILE'.
+Thread 19699880: Enviando OK para @cliente 7...
+Thread 19699880: OK enviado para @cliente 7.
+Thread 19699880: Aguardando nova requisição do @cliente 7...
+Thread 19699880: Requisição recebida: 'COMMIT'.
+Thread 19699880: Arquivo de 19 bytes aberto para leitura.
+Thread 19699880: Arquivo enviado para o @cliente 7 com sucesso!
+Thread 19699880: Fechando Conexão com o @cliente 7.
+
+Thread 19698600: Conexão estabelecida com o @cliente 8
+Thread 19698600: Aguardando requisicao...
+Thread 19698600: Requisição recebida: 'SETKEY'.
+Thread 19698600: Enviando OK para @cliente 8...
+Thread 19698600: OK enviado para @cliente 8.
+Thread 19698600: Aguardando nova requisição do @cliente 8...
+Thread 19698600: Requisição recebida: 'COMMIT'.
+Thread 19698600: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Descifrado com a chave 'A': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'B':
+FVTPVVNUFYUPDJGSBEP
+
+Thread 19698600: Chave alterada de 'A' para 'B'.
+Thread 19698600: Fechando Conexão com o @cliente 8.
+
+Thread 19680000: Conexão estabelecida com o @cliente 9
+Thread 19680000: Aguardando requisicao...
+Thread 19680000: Requisição recebida: 'GETFILE'.
+Thread 19680000: Enviando OK para @cliente 9...
+Thread 19680000: OK enviado para @cliente 9.
+Thread 19680000: Aguardando nova requisição do @cliente 9...
+Thread 19680000: Requisição recebida: 'COMMIT'.
+Thread 19680000: Arquivo de 19 bytes aberto para leitura.
+Thread 19680000: Arquivo enviado para o @cliente 9 com sucesso!
+Thread 19680000: Fechando Conexão com o @cliente 9.
+Salvando palavra chave B no arquivo keyword1234
+
+Saindo do Servidor.
+Bye bye!</pre>
+        </div>
+      </div>
+
+      <hr>
+      
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Servidor 2</h4>
+            <pre class="prettyprint linenums"> -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+ -----------------------------------------------------------------------
+Servidor: 2345
+
+Thread 12974280: Conexão estabelecida com o @cliente 1
+Thread 12974280: Aguardando requisicao...
+Thread 12974280: Requisição recebida: 'GETKEY'.
+Thread 12974280: Enviando OK para @cliente 1...
+Thread 12974280: OK enviado para @cliente 1.
+Thread 12974280: Aguardando nova requisição do @cliente 1...
+Thread 12974280: Requisição recebida: 'COMMIT'.
+Thread 12974280: Palavra-chave 'a' enviada para o @cliente 1 com sucesso!
+Thread 12974280: Fechando Conexão com o @cliente 1.
+
+Thread 12971520: Conexão estabelecida com o @cliente 2
+Thread 12971520: Aguardando requisicao...
+Thread 12971520: Requisição recebida: 'SETKEY'.
+Thread 12971520: Enviando OK para @cliente 2...
+Thread 12971520: OK enviado para @cliente 2.
+Thread 12971520: Aguardando nova requisição do @cliente 2...
+Thread 12971520: Requisição recebida: 'COMMIT'.
+Thread 12971520: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'a':
+EU SOU UM TEXTO CIFRADO
+
+Descifrado com a chave 'a': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Thread 12971520: Chave alterada de 'a' para 'teste'.
+Thread 12971520: Fechando Conexão com o @cliente 2.
+
+Thread 12874160: Conexão estabelecida com o @cliente 3
+Thread 12874160: Aguardando requisicao...
+Thread 12874160: Requisição recebida: 'GETKEY'.
+Thread 12874160: Enviando OK para @cliente 3...
+Thread 12874160: OK enviado para @cliente 3.
+Thread 12874160: Aguardando nova requisição do @cliente 3...
+Thread 12874160: Requisição recebida: 'COMMIT'.
+Thread 12874160: Palavra-chave 'teste' enviada para o @cliente 3 com sucesso!
+Thread 12874160: Fechando Conexão com o @cliente 3.
+
+Thread 12873240: Conexão estabelecida com o @cliente 4
+Thread 12873240: Aguardando requisicao...
+Thread 12873240: Requisição recebida: 'GETFILE'.
+Thread 12873240: Enviando OK para @cliente 4...
+Thread 12873240: OK enviado para @cliente 4.
+Thread 12873240: Aguardando nova requisição do @cliente 4...
+Thread 12873240: Requisição recebida: 'COMMIT'.
+Thread 12873240: Arquivo de 19 bytes aberto para leitura.
+Thread 12873240: Arquivo enviado para o @cliente 4 com sucesso!
+Thread 12873240: Fechando Conexão com o @cliente 4.
+
+Thread 12872120: Conexão estabelecida com o @cliente 5
+Thread 12872120: Aguardando requisicao...
+Thread 12872120: Requisição recebida: 'SETKEY'.
+Thread 12872120: Enviando OK para @cliente 5...
+Thread 12872120: OK enviado para @cliente 5.
+Thread 12872120: Aguardando nova requisição do @cliente 5...
+Thread 12872120: Requisição recebida: 'COMMIT'.
+Thread 12872120: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Descifrado com a chave 'teste': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Thread 12872120: Chave alterada de 'teste' para 'A'.
+Thread 12872120: Fechando Conexão com o @cliente 5.
+
+Thread 12020840: Conexão estabelecida com o @cliente 6
+Thread 12020840: Aguardando requisicao...
+Thread 12020840: Requisição recebida: 'GETKEY'.
+Thread 12020840: Enviando OK para @cliente 6...
+Thread 12020840: OK enviado para @cliente 6.
+Thread 12020840: Aguardando nova requisição do @cliente 6...
+Thread 12020840: Requisição recebida: 'COMMIT'.
+Thread 12020840: Palavra-chave 'A' enviada para o @cliente 6 com sucesso!
+Thread 12020840: Fechando Conexão com o @cliente 6.
+
+Thread 12019880: Conexão estabelecida com o @cliente 7
+Thread 12019880: Aguardando requisicao...
+Thread 12019880: Requisição recebida: 'GETFILE'.
+Thread 12019880: Enviando OK para @cliente 7...
+Thread 12019880: OK enviado para @cliente 7.
+Thread 12019880: Aguardando nova requisição do @cliente 7...
+Thread 12019880: Requisição recebida: 'COMMIT'.
+Thread 12019880: Arquivo de 19 bytes aberto para leitura.
+Thread 12019880: Arquivo enviado para o @cliente 7 com sucesso!
+Thread 12019880: Fechando Conexão com o @cliente 7.
+
+Thread 12018600: Conexão estabelecida com o @cliente 8
+Thread 12018600: Aguardando requisicao...
+Thread 12018600: Requisição recebida: 'SETKEY'.
+Thread 12018600: Enviando OK para @cliente 8...
+Thread 12018600: OK enviado para @cliente 8.
+Thread 12018600: Aguardando nova requisição do @cliente 8...
+Thread 12018600: Requisição recebida: 'COMMIT'.
+Thread 12018600: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Descifrado com a chave 'A': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'B':
+FVTPVVNUFYUPDJGSBEP
+
+Thread 12018600: Chave alterada de 'A' para 'B'.
+Thread 12018600: Fechando Conexão com o @cliente 8.
+
+Thread 12000000: Conexão estabelecida com o @cliente 9
+Thread 12000000: Aguardando requisicao...
+Thread 12000000: Requisição recebida: 'GETFILE'.
+Thread 12000000: Enviando OK para @cliente 9...
+Thread 12000000: OK enviado para @cliente 9.
+Thread 12000000: Aguardando nova requisição do @cliente 9...
+Thread 12000000: Requisição recebida: 'COMMIT'.
+Thread 12000000: Arquivo de 19 bytes aberto para leitura.
+Thread 12000000: Arquivo enviado para o @cliente 9 com sucesso!
+Thread 12000000: Fechando Conexão com o @cliente 9.
+Salvando palavra chave B no arquivo keyword2345
+
+Saindo do Servidor.
+Bye bye!</pre>
+        </div>
+      </div>
+
+      <hr>
+      
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Servidor 3</h4>
+            <pre class="prettyprint linenums"> -----------------------------------------------------------------------
+| Prof. Elias P. Duarte Jr.  -  Disciplina Redes 2                      |
+| Trabalho que implementa a Consistência de Dados com 2PC Simplificado  |
+-----------------------------------------------------------------------
+Servidor: 3456
+
+Thread 11341440: Conexão estabelecida com o @cliente 1
+Thread 11341440: Aguardando requisicao...
+Thread 11341440: Requisição recebida: 'GETKEY'.
+Thread 11341440: Enviando OK para @cliente 1...
+Thread 11341440: OK enviado para @cliente 1.
+Thread 11341440: Aguardando nova requisição do @cliente 1...
+Thread 11341440: Requisição recebida: 'COMMIT'.
+Thread 11341440: Palavra-chave 'a' enviada para o @cliente 1 com sucesso!
+Thread 11341440: Fechando Conexão com o @cliente 1.
+
+Thread 11338680: Conexão estabelecida com o @cliente 2
+Thread 11338680: Aguardando requisicao...
+Thread 11338680: Requisição recebida: 'SETKEY'.
+Thread 11338680: Enviando OK para @cliente 2...
+Thread 11338680: OK enviado para @cliente 2.
+Thread 11338680: Aguardando nova requisição do @cliente 2...
+Thread 11338680: Requisição recebida: 'COMMIT'.
+Thread 11338680: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'a':
+EU SOU UM TEXTO CIFRADO
+
+Descifrado com a chave 'a': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Thread 11338680: Chave alterada de 'a' para 'teste'.
+Thread 11338680: Fechando Conexão com o @cliente 2.
+
+Thread 11241880: Conexão estabelecida com o @cliente 3
+Thread 11241880: Aguardando requisicao...
+Thread 11241880: Requisição recebida: 'GETKEY'.
+Thread 11241880: Enviando OK para @cliente 3...
+Thread 11241880: OK enviado para @cliente 3.
+Thread 11241880: Aguardando nova requisição do @cliente 3...
+Thread 11241880: Requisição recebida: 'COMMIT'.
+Thread 11241880: Palavra-chave 'teste' enviada para o @cliente 3 com sucesso!
+Thread 11241880: Fechando Conexão com o @cliente 3.
+
+Thread 11240960: Conexão estabelecida com o @cliente 4
+Thread 11240960: Aguardando requisicao...
+Thread 11240960: Requisição recebida: 'GETFILE'.
+Thread 11240960: Enviando OK para @cliente 4...
+Thread 11240960: OK enviado para @cliente 4.
+Thread 11240960: Aguardando nova requisição do @cliente 4...
+Thread 11240960: Requisição recebida: 'COMMIT'.
+Thread 11240960: Arquivo de 19 bytes aberto para leitura.
+Thread 11240960: Arquivo enviado para o @cliente 4 com sucesso!
+Thread 11240960: Fechando Conexão com o @cliente 4.
+
+Thread 11239840: Conexão estabelecida com o @cliente 5
+Thread 11239840: Aguardando requisicao...
+Thread 11239840: Requisição recebida: 'SETKEY'.
+Thread 11239840: Enviando OK para @cliente 5...
+Thread 11239840: OK enviado para @cliente 5.
+Thread 11239840: Aguardando nova requisição do @cliente 5...
+Thread 11239840: Requisição recebida: 'COMMIT'.
+Thread 11239840: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'teste':
+XYKHYNQLXBMSUBJKEVH
+
+Descifrado com a chave 'teste': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Thread 11239840: Chave alterada de 'teste' para 'A'.
+Thread 11239840: Fechando Conexão com o @cliente 5.
+
+Thread 10388420: Conexão estabelecida com o @cliente 6
+Thread 10388420: Aguardando requisicao...
+Thread 10388420: Requisição recebida: 'GETKEY'.
+Thread 10388420: Enviando OK para @cliente 6...
+Thread 10388420: OK enviado para @cliente 6.
+Thread 10388420: Aguardando nova requisição do @cliente 6...
+Thread 10388420: Requisição recebida: 'COMMIT'.
+Thread 10388420: Palavra-chave 'A' enviada para o @cliente 6 com sucesso!
+Thread 10388420: Fechando Conexão com o @cliente 6.
+
+Thread 10387460: Conexão estabelecida com o @cliente 7
+Thread 10387460: Aguardando requisicao...
+Thread 10387460: Requisição recebida: 'GETFILE'.
+Thread 10387460: Enviando OK para @cliente 7...
+Thread 10387460: OK enviado para @cliente 7.
+Thread 10387460: Aguardando nova requisição do @cliente 7...
+Thread 10387460: Requisição recebida: 'COMMIT'.
+Thread 10387460: Arquivo de 19 bytes aberto para leitura.
+Thread 10387460: Arquivo enviado para o @cliente 7 com sucesso!
+Thread 10387460: Fechando Conexão com o @cliente 7.
+
+Thread 10386200: Conexão estabelecida com o @cliente 8
+Thread 10386200: Aguardando requisicao...
+Thread 10386200: Requisição recebida: 'SETKEY'.
+Thread 10386200: Enviando OK para @cliente 8...
+Thread 10386200: OK enviado para @cliente 8.
+Thread 10386200: Aguardando nova requisição do @cliente 8...
+Thread 10386200: Requisição recebida: 'COMMIT'.
+Thread 10386200: Criptografando arquivo...
+Arquivo cifrado com a antiga palavra chave 'A':
+EUSOUUMTEXTOCIFRADO
+
+Descifrado com a chave 'A': 
+Arquivo descifrado:
+EUSOUUMTEXTOCIFRADO
+
+Novo arquivo cifrado com a chave 'B':
+FVTPVVNUFYUPDJGSBEP
+
+Thread 10386200: Chave alterada de 'A' para 'B'.
+Thread 10386200: Fechando Conexão com o @cliente 8.
+
+Thread 10367640: Conexão estabelecida com o @cliente 9
+Thread 10367640: Aguardando requisicao...
+Thread 10367640: Requisição recebida: 'GETFILE'.
+Thread 10367640: Enviando OK para @cliente 9...
+Thread 10367640: OK enviado para @cliente 9.
+Thread 10367640: Aguardando nova requisição do @cliente 9...
+Thread 10367640: Requisição recebida: 'COMMIT'.
+Thread 10367640: Arquivo de 19 bytes aberto para leitura.
+Thread 10367640: Arquivo enviado para o @cliente 9 com sucesso!
+Thread 10367640: Fechando Conexão com o @cliente 9.
+Salvando palavra chave B no arquivo keyword3456
+
+Saindo do Servidor.
+Bye bye!</pre>
+        </div>
+      </div>
+
+      <hr>
+
+    </div>
+
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=desert"></script>
+  </body>
+</html>
