@@ -6,13 +6,9 @@ application.controller('MainController',function($scope) {
    
     $scope.disciplinas = [
         {
-            nome: "CI065 - Algoritmos e Teoria dos Grafos",
-            url: "http://www.inf.ufpr.br/andre/Disciplinas/CI065-2017-1/"
+            nome: "CI211 - Construção de Compiladores",
+            url: "http://www.inf.ufpr.br/bmuller/"
         }
-        // {
-        //     nome: "CI211 - Construção de Compiladores",
-        //     url: "http://www.inf.ufpr.br/bmuller/"
-        // }
     ];
     
     $scope.trabalhos = [
